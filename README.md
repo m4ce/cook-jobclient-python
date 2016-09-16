@@ -20,7 +20,7 @@ Valid authentication methods are: http_basic, kerberos
 
 Launch job(s)
 ```
-resp = jobclient.submit(jobs: [{'uuid': "da75efdc-7c01-11e6-beaa-000c295e64ae", 'max_retries': 1, 'max_runtime': 86400000, 'mem': 1000, 'cpus': 1.5, 'command': 'id'}])
+resp = jobclient.submit(jobs = [{'uuid': "da75efdc-7c01-11e6-beaa-000c295e64ae", 'max_retries': 1, 'max_runtime': 86400000, 'mem': 1000, 'cpus': 1.5, 'command': 'id'}])
 if resp['status'] == JobClient.Status.OK:
   print("Jobs successfully submitted.")
   print("Jobs UUIDs: {0}".format(resp['data']))
@@ -32,7 +32,7 @@ If UUID is absent, one will be automatically generated in the submit method and 
 
 Query job(s)
 ```
-resp = jobclient.query(jobs: ["da75efdc-7c01-11e6-beaa-000c295e64ae"])
+resp = jobclient.query(jobs = ["da75efdc-7c01-11e6-beaa-000c295e64ae"])
 for r in resp:
   if r['status'] == JobClient.Status.OK:
     print(r['data'])
@@ -42,12 +42,18 @@ for r in resp:
 
 Delete job(s)
 ```
-resp = jobclient.delete(jobs: ["da75efdc-7c01-11e6-beaa-000c295e64ae"])
+resp = jobclient.delete(jobs = ["da75efdc-7c01-11e6-beaa-000c295e64ae"])
 for r in resp:
   if r['status'] == JobClient.Status.OK:
     print("Jobs marked for deletion")
   else:
     print("Jobs deletion failed (reason: {0})".format(r['reason']))
+```
+
+Wait for job(s) to complete
+```
+for job in jobclient.wait(jobs = ["da75efdc-7c01-11e6-beaa-000c295e64ae", "da75efdc-7c01-11e7-beaa-000c295e64ae"]):
+  print("Job {0} completed, status {1}".format(job['status'], job['instances'][0]['status']))
 ```
 
 ## Contact
