@@ -213,7 +213,7 @@ class JobClient:
     return reply
 
   def wait(self, jobs):
-    while len(jobs) > 0:
+    while True:
       # check the status of the job if it's completed
 
       for resp in self.query(jobs = jobs):
@@ -221,6 +221,9 @@ class JobClient:
           for job in resp['data']:
             if job['status'] == 'completed':
               yield(job)
-              jobs.delete(job)
+              jobs.remove(job['uuid'])
 
-      time.sleep(self.status_update_interval_seconds)
+      if len(jobs) > 0:
+        time.sleep(self.status_update_interval_seconds)
+      else:
+        break
