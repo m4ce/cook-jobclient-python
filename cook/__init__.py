@@ -77,23 +77,13 @@ class JobClient:
     return requests.post(self.url + query, headers = {"Content-Type": "application/json", "Accept": "application/json"}, auth = self.auth, data = json.dumps(data), timeout = self.request_timeout_seconds)
 
   def __batch_request(self, jobs):
-    requests = []
-
     # build a single request
-    request = []
-    for job in jobs:
-      arg = "job={0}".format(job)
+    batch = []
+    for i in range(0, len(jobs), self.batch_request_size):
+      chunk = jobs[i:i+self.batch_request_size]
+      batch.append(["job={0}".format(uuid) for uuid in chunk])
 
-      # calculate the request's size
-      if len(request) > self.batch_request_size:
-        requests.append(request)
-
-        # create a new request
-        request = []
-
-      request.append(arg)
-
-    return requests
+    return batch
 
   def delete(self, **kwargs):
     if 'jobs' not in kwargs:
@@ -108,7 +98,7 @@ class JobClient:
     if len(jobs) > 1:
       req = []
       for r in self.__batch_request(jobs):
-        req.append(''.join([self.scheduler_api_endpoint, '?', '&'.join(request)]))
+        req.append(''.join([self.scheduler_api_endpoint, '?', '&'.join(r)]))
     else:
       req = "{0}?job={1}".format(self.scheduler_api_endpoint, jobs[0])
 
@@ -151,7 +141,7 @@ class JobClient:
     if len(jobs) > 1:
       req = []
       for r in self.__batch_request(jobs):
-        req.append(''.join([self.scheduler_api_endpoint, '?', '&'.join(request)]))
+        req.append(''.join([self.scheduler_api_endpoint, '?', '&'.join(r)]))
     else:
       req = "{0}?job={1}".format(self.scheduler_api_endpoint, jobs[0])
 
@@ -221,3 +211,16 @@ class JobClient:
     reply['http_code'] = resp.status_code
 
     return reply
+
+  def wait(self, jobs):
+    while len(jobs) > 0:
+      # check the status of the job if it's completed
+
+      for resp in self.query(jobs = jobs):
+        if resp['status'] == Jobclient.Status.OK:
+          for job in resp['data']:
+            if job['status'] == 'completed':
+              yield(job)
+              jobs.delete(job)
+
+      time.sleep(self.status_update_interval_seconds)
