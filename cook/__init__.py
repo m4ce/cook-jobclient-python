@@ -217,7 +217,7 @@ class JobClient:
       # check the status of the job if it's completed
 
       for resp in self.query(jobs = jobs):
-        if resp['status'] == Jobclient.Status.OK:
+        if resp['status'] == JobClient.Status.OK:
           for job in resp['data']:
             if job['status'] == 'completed':
               yield(job)
