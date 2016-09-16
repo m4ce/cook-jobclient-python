@@ -214,14 +214,14 @@ class JobClient:
 
   def wait(self, jobs):
     while True:
-      # check the status of the job if it's completed
-
       for resp in self.query(jobs = jobs):
         if resp['status'] == JobClient.Status.OK:
           for job in resp['data']:
             if job['status'] == 'completed':
               yield(job)
               jobs.remove(job['uuid'])
+        else:
+          raise RuntimeError("Failed to query jobs (reason: {0})".format(resp['reason']))
 
       if len(jobs) > 0:
         time.sleep(self.status_update_interval_seconds)
