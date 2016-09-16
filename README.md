@@ -16,7 +16,18 @@ from cook import JobClient
 jobclient = JobClient(url = "http://cook", auth = "http_basic", http_user = "foo", http_password = "bar")
 ```
 
-Valid authentication methods are: http_basic, kerberos
+Valid parameters are:
+
+| Name | Description | Type | Default | Required |
+| ------------- | ------------- | ------------- | ------------- | ------------- |
+|  url | Cook Scheduler URL | String | None | True |
+| auth | Authentication method (http_basic, kerberos) | String | None | True |
+| http_user | User for HTTP basic authentication | String | None | False |
+| http_password | Password for HTTP basic authentication | String | None | False |
+| batch_request_size | Maximum number of jobs to place in a single request | Integer | 32 | False |
+| status_update_interval_seconds | Poll interval when waiting for jobs to complete | Integer | 10 | False |
+| request_timeout_seconds | HTTP requests timeout in seconds | Integer | 60 | False |
+
 
 Launch job(s)
 ```
