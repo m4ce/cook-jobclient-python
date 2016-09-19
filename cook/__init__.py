@@ -6,6 +6,7 @@ import json
 import requests
 import uuid
 import time
+import logging
 from requests_kerberos import HTTPKerberosAuth
 from requests.auth import HTTPBasicAuth
 
@@ -54,6 +55,11 @@ class JobClient:
 
     self.scheduler_api_endpoint = "/rawscheduler"
     self.jobs = []
+
+    # set up logger
+    logger = logging.getLogger(__name__)
+    logger.addHandler(logging.NullHandler())
+    self.logger = logger
 
   def __api_get(self, query):
     if not isinstance(query, list):
@@ -214,14 +220,17 @@ class JobClient:
 
   def wait(self, jobs):
     while True:
-      for resp in self.query(jobs = jobs):
-        if resp['status'] == JobClient.Status.OK:
-          for job in resp['data']:
-            if job['status'] == 'completed':
-              yield(job)
-              jobs.remove(job['uuid'])
-        else:
-          raise RuntimeError("Failed to query jobs (reason: {0})".format(resp['reason']))
+      try:
+        for resp in self.query(jobs = jobs):
+          if resp['status'] == JobClient.Status.OK:
+            for job in resp['data']:
+              if job['status'] == 'completed':
+                yield(job)
+                jobs.remove(job['uuid'])
+          else:
+            raise RuntimeError("Failed to query jobs (reason: {0})".format(resp['reason']))
+      except Exception, e:
+        self.logger.error("Failed to connect to query jobs status: {0}".format(str(e)))
 
       if len(jobs) > 0:
         time.sleep(self.status_update_interval_seconds)
