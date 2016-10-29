@@ -66,8 +66,9 @@ class JobClient:
       query = [query]
 
     req = []
-    for q in query:
-      req.append(requests.get(self.url + q, headers = {"Content-Type": "application/json", "Accept": "application/json"}, auth = self.auth, timeout = self.request_timeout_seconds))
+    with requests.Session() as session:
+      for q in query:
+        req.append(session.get(self.url + q, headers = {"Content-Type": "application/json", "Accept": "application/json"}, auth = self.auth, timeout = self.request_timeout_seconds))
     return req
 
   def __api_delete(self, query):
