@@ -231,7 +231,7 @@ class JobClient:
           else:
             raise RuntimeError("Failed to query jobs (reason: {0})".format(resp['reason']))
       except Exception as e:
-        raise RuntimeError("Caught exception {(0})".format(str(e)))
+        raise RuntimeError("Caught exception ({0})".format(str(e)))
 
       if len(jobs) > 0:
         time.sleep(self.status_update_interval_seconds)
