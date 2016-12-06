@@ -230,8 +230,8 @@ class JobClient:
                 jobs.remove(job['uuid'])
           else:
             raise RuntimeError("Failed to query jobs (reason: {0})".format(resp['reason']))
-      except Exception, e:
-        self.logger.error("Failed to connect to query jobs status: {0}".format(str(e)))
+      except Exception as e:
+        raise RuntimeError("Caught exception {(0})".format(str(e)))
 
       if len(jobs) > 0:
         time.sleep(self.status_update_interval_seconds)
