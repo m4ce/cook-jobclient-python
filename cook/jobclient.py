@@ -21,7 +21,7 @@ class JobClient(object):
         Optional('uuid'): And(basestring, lambda s: len(s) > 0 and UUID(s)),
         Optional('executor'): And(basestring, lambda s: s in ('mesos', 'cook')),
         Optional('priority'): And(Use(int), lambda n: (0 <= n <= 100)),
-        Optional('max_retries'): And(Use(int), lambda n: n >= 0),
+        'max_retries': And(Use(int), lambda n: n > 0),
         Optional('max_runtime'): And(Use(long), lambda n: n > 0),
         Optional('expected_runtime'): And(Use(long), lambda n: n > 0),
         Optional('cpus'): And(Or(int, float), lambda n: n > 0),
@@ -51,7 +51,7 @@ class JobClient(object):
     """str: the API endpoint for retrying jobs"""
 
     def __init__(self, url, auth='http_basic', http_user=None, http_password=None, batch_request_size=32,
-                 status_update_interval_secs=10, request_timeout_secs=60):
+                 status_update_interval_secs=10, request_timeout_secs=60, default_job_settings={'max_retries': 1}):
         """Initialize Cook Job Client
 
         Args:
@@ -62,6 +62,7 @@ class JobClient(object):
             batch_request_size (int): Request size when performing batch requests
             status_update_interval_secs (int): Polling interval to wait on job's status updates
             request_timeout_secs (int): HTTP request timeout
+            default_job_settings (dict): Default parameters for submitted jobs
         """
         self._auth = None
 
@@ -81,6 +82,7 @@ class JobClient(object):
         self._batch_request_size = batch_request_size
         self._status_update_interval_secs = status_update_interval_secs
         self._request_timeout_secs = request_timeout_secs
+        self._default_job_settings = default_job_settings
 
     def get_url(self):
         """Returns the Cook API URL
@@ -97,6 +99,14 @@ class JobClient(object):
             str: The auth method
         """
         return self._auth
+
+    def get_default_job_settings(self):
+        """Returns the default job settings
+
+        Returns:
+            dict: The job settings
+        """
+        return self._default_job_settings
 
     def _api_get(self, query):
         """Perform a HTTP GET request
@@ -238,13 +248,16 @@ class JobClient(object):
         assert isinstance(jobs, list), 'Jobs must be type list'
         assert len(jobs) > 0, 'One or more jobs required'
 
-        self._job_schema.validate(jobs)
-
         data = {'jobs': jobs}
         for j in data['jobs']:
             # generate a random UUID if absent
             if 'uuid' not in j:
                 j['uuid'] = str(uuid1())
+
+            # default missing fields
+            j.update(dict(self._default_job_settings.items() + j.items()))
+
+        self._job_schema.validate(jobs)
 
         try:
             self._api_post(self._scheduler_endpoint, data)

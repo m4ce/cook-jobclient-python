@@ -12,7 +12,7 @@ from requests_kerberos import HTTPKerberosAuth
 
 class JobClientTests(unittest.TestCase):
     def setUp(self):
-        self.client = JobClient(url='http://localhost:12310', http_user='foo', http_password='secret')
+        self.client = JobClient(url='http://localhost:12310', http_user='foo', http_password='secret', default_job_settings={'max_retries': 10})
 
         with open("{}/test_jobs.json".format(os.path.dirname(__file__)), 'r') as f:
             self._jobs = json.loads(f.read())
@@ -32,6 +32,9 @@ class JobClientTests(unittest.TestCase):
 
     def test_url(self):
         self.assertEquals(self.client.get_url(), 'http://localhost:12310')
+
+    def test_default_job_settings(self):
+        self.assertDictEqual(self.client.get_default_job_settings(), {'max_retries': 10})
 
     def test_batch_request(self):
         expected = [
@@ -237,13 +240,13 @@ class JobClientTests(unittest.TestCase):
         # test max_retries
         self.assertSequenceEqual(self.client.submit([{
             'uuid': '15dd97d6-a628-11e7-b27b-3cfdfea21a98',
-            'max_retries': 0
+            'max_retries': 10
         }]), expected)
 
-        # should break if max_retries < 0
+        # should break if max_retries <= 0
         with self.assertRaises(SchemaError):
             self.client.submit([{
-                'max_retries': -1
+                'max_retries': 0
             }])
 
         # test max_runtime and expected_runtime
